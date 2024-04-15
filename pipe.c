@@ -3,41 +3,53 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#define BUF_SIZE 100 
+
+
 int main(int argc, char *argv[]) {
-    int command_n = 1;
-    char *command_s = NULL;
-    int pipefd[2]; // pipe file descriptors
-    while (command_n < argc) {
-        command_s = argv[command_n];
-        fprintf(stderr, "commandn: %d\n", command_n);
-        fprintf(stderr, "commands: %s\n", command_s);
-        int pipe_val = pipe(pipefd); // create pipe
-        if (pipe_val == -1) {
-            fprintf(stderr, "pipe failed\n");
-            exit(1);
+    int pipefd[argc - 1][2]; // pipe file descriptors
+    if (pipe(pipefd[0]) < 0){ //create 1st pipe
+        fprintf(stderr, "pipe error");
+        exit(1);
+    }
+    int rv = fork(); //1st child
+    if (rv < 0) {
+        fprintf(stderr, "fork failed\n");
+        exit(1);
+    } else if (rv == 0) {//child
+        close(pipefd[0][0]); //close read end
+        dup2(pipefd[0][1],STDOUT_FILENO); //redirect stdout to write end of pipe 
+        printf("Process child id: %d\n", getpid());
+        execlp(argv[1], argv[1], NULL);
+    } else { //parent
+        close(pipefd[0][1]); //close write end
+        dup2(pipefd[0][0], STDIN_FILENO); //redirect stdin to read end of pipe
+        wait(NULL); //wait for child
+        char buffer[BUF_SIZE];
+        ssize_t bytesRead;
+        while ((bytesRead = read(pipefd[0][0], buffer, sizeof(buffer))) > 0) {
+            // Write the read data to the parent's standard output
+            write(STDOUT_FILENO, buffer, bytesRead);
         }
-        int fork_rv = fork(); // return value: -1 if failure, 0 in child,
-        // PID in parent
-        // handle error
-        if (fork_rv < 0) {
-            fprintf(stderr, "fork failed\n");
-            exit(1);
-        } else if (fork_rv == 0) {
-            // handle child
-            printf("I am the child");
-            close(pipefd[1]); // close write end
-            execlp(command_s, command_s, NULL); // shouldn't be outputted, checking
-            // nothing should print
-        } else {
-            printf("hello, I am parent(pid:%d)\n", (int)getpid());
-            close(pipefd[0]); //close read end
-            // wait for child to finish
-            int wait_rv = wait(NULL);
-            if (wait_rv == -1) {
-                printf("wait failed\n");
-            }
-        }
-        command_n++;
-    } // command 1 printing
-    return 0;
+    }
+    // if (pipe(pipefd[argc - 1]) < 0){ //create ith pipe
+    //     fprintf(stderr, "pipe error");
+    //     exit(1);
+    // } 
+    // printf("Process parent id: %d\n", getpid());
+    // printf("here");
+    // //first thing done
+    // rv = fork();
+    // if (rv < 0) {
+    //     fprintf(stderr, "fork failed\n");
+    //     exit(1);
+    // } else if (rv == 0) { //child
+    //     dup2(pipefd[argc - 2][1], pipefd[argc - 1][0]);
+    //     execlp(argv[argc - 1], argv[argc - 1], NULL);
+    // } else {    
+    //     close(pipefd[argc - 1][1]); //close write end
+    //     close(pipefd[argc - 1][0]); //close read end
+    //     wait(NULL); //wait for child
+    // }
+    // return 0;
 }
