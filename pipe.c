@@ -30,8 +30,8 @@ int main(int argc, char *argv[]) {
         dup2(pipefd[0][0], STDIN_FILENO); //redirect stdin to read end of pipe
         int status;
         wait(&status); //wait for child
-        if (WEXITSTATUS(status) == 1) {
-            fprintf(stderr, "child exited with status 1\n");
+        if (WEXITSTATUS(status) != 0) {
+            fprintf(stderr, "child exited with status %d\n", WEXITSTATUS(status));
             exit(1);
         }
     }
@@ -59,11 +59,10 @@ int main(int argc, char *argv[]) {
         } else { //parent
             close(pipefd[i][1]); //close write end
             dup2(pipefd[i][0], STDIN_FILENO); //redirect stdin to read end of pipe
-            wait(NULL); //wait for child
             int status;
             wait(&status); //wait for child
-            if (WEXITSTATUS(status) == 1) {
-                fprintf(stderr, "child exited with status 1\n");
+            if (WEXITSTATUS(status) != 0) {
+                printf("child exited with signal %d\n", WEXITSTATUS(status));
                 exit(1);
             }
         }
@@ -89,16 +88,15 @@ int main(int argc, char *argv[]) {
     } else { //parent
         close(pipefd[argc - 2][1]); //close write end
         close(pipefd[argc - 2][0]); //close read end
-        wait(NULL); //wait for child
         int status;
         wait(&status); //wait for child
-        if (WEXITSTATUS(status) == 1) {
-            fprintf(stderr, "child exited with status 1\n");
+        if (WEXITSTATUS(status) != 0) {
+            printf("child exited with signal %d\n", WEXITSTATUS(status));
             exit(1);
         }
     }
-
     bytes_read = read(pipefd[argc -  2][0], &buffer, sizeof(buffer));
     write(STDOUT_FILENO, &buffer, bytes_read);
     return 0;
 }
+
