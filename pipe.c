@@ -8,6 +8,9 @@
 
 
 int main(int argc, char *argv[]) {
+    if (argc == 1){
+        exit(EINVAL);
+    }
     int pipefd[argc - 1][2]; // pipe file descriptors
     char buffer[BUF_SIZE];    
     ssize_t bytes_read;
