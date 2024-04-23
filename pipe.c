@@ -9,6 +9,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc == 1){
+        fprintf(stderr, "exiting with status %d\n", EINVAL);
         exit(EINVAL);
     }
     int pipefd[argc - 1][2]; // pipe file descriptors
@@ -16,7 +17,7 @@ int main(int argc, char *argv[]) {
     ssize_t bytes_read;
     if (pipe(pipefd[0]) < 0){ //create 1st pipe
         fprintf(stderr, "pipe error");
-        exit(1);
+        exit(errno);
     }
     int rv = fork(); //1st child
     if (rv < 0) {
@@ -26,7 +27,6 @@ int main(int argc, char *argv[]) {
         close(pipefd[0][0]); //close read end
         dup2(pipefd[0][1],STDOUT_FILENO); //redirect stdout to write end of pipe 
         if (execlp(argv[1], argv[1], NULL) < 0){
-            fprintf(stderr, "bogus argument");
             exit(errno);
         }
     } else { //parent
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
         wait(&status); //wait for child
         if (WEXITSTATUS(status) != 0) {
             fprintf(stderr, "child exited with status %d\n", WEXITSTATUS(status));
-            exit(errno);
+            exit(status);
         }
     }
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
             wait(&status); //wait for child
             if (WEXITSTATUS(status) != 0) {
                 printf("child exited with signal %d\n", WEXITSTATUS(status));
-                exit(errno);
+                exit(status);
             }
         }
     }
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
         wait(&status); //wait for child
         if (WEXITSTATUS(status) != 0) {
             printf("child exited with signal %d\n", WEXITSTATUS(status));
-            exit(errno);
+            exit(status);
         }
     }
     bytes_read = read(pipefd[argc -  2][0], &buffer, sizeof(buffer));
