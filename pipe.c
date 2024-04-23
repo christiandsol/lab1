@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,13 +18,13 @@ int main(int argc, char *argv[]) {
     int rv = fork(); //1st child
     if (rv < 0) {
         fprintf(stderr, "fork failed\n");
-        exit(1);
+        exit(errno);
     } else if (rv == 0) {//child
         close(pipefd[0][0]); //close read end
         dup2(pipefd[0][1],STDOUT_FILENO); //redirect stdout to write end of pipe 
         if (execlp(argv[1], argv[1], NULL) < 0){
             fprintf(stderr, "bogus argument");
-            exit(1);
+            exit(errno);
         }
     } else { //parent
         close(pipefd[0][1]); //close write end
@@ -32,7 +33,7 @@ int main(int argc, char *argv[]) {
         wait(&status); //wait for child
         if (WEXITSTATUS(status) != 0) {
             fprintf(stderr, "child exited with status %d\n", WEXITSTATUS(status));
-            exit(1);
+            exit(errno);
         }
     }
 
@@ -41,12 +42,12 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc - 2; i++) {
         if (pipe(pipefd[i]) < 0){ //create ith pipe
             fprintf(stderr, "pipe error");
-            exit(1);
+            exit(errno);
         }
         rv = fork();
         if (rv < 0) {
             fprintf(stderr, "fork failed\n");
-            exit(1);
+            exit(errno);
         } else if (rv == 0) { //child
             //data is in read end of pipe i-1
             close(pipefd[i][0]); //close read end
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]) {
             dup2(pipefd[i][1],STDOUT_FILENO); //redirect stdout to write end of pipe 
             if (execlp(argv[i + 1], argv[i + 1], NULL) < 0){
                 fprintf(stderr, "bogus argument");
-                exit(1);
+                exit(errno);
             }
         } else { //parent
             close(pipefd[i][1]); //close write end
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
             wait(&status); //wait for child
             if (WEXITSTATUS(status) != 0) {
                 printf("child exited with signal %d\n", WEXITSTATUS(status));
-                exit(1);
+                exit(errno);
             }
         }
     }
@@ -71,19 +72,19 @@ int main(int argc, char *argv[]) {
     //parent last program
     if (pipe(pipefd[argc - 2]) < 0){ //create ith pipe
         fprintf(stderr, "pipe error");
-        exit(1);
+        exit(errno);
     } 
     rv = fork();
     if (rv < 0) {
         fprintf(stderr, "fork failed\n");
-        exit(1);
+        exit(errno);
     } else if (rv == 0) { //child
         // redirect previous pipe output to stdin
         close(pipefd[argc - 2][0]); //close read end
         dup2(pipefd[argc - 3][1], pipefd[argc - 2][0]);
         if(execlp(argv[argc - 1], argv[argc - 1], NULL) < 0){
             fprintf(stderr, "bogus argument");
-            exit(1);
+            exit(errno);
         }
     } else { //parent
         close(pipefd[argc - 2][1]); //close write end
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
         wait(&status); //wait for child
         if (WEXITSTATUS(status) != 0) {
             printf("child exited with signal %d\n", WEXITSTATUS(status));
-            exit(1);
+            exit(errno);
         }
     }
     bytes_read = read(pipefd[argc -  2][0], &buffer, sizeof(buffer));
