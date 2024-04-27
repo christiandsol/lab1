@@ -2,16 +2,22 @@
 
 ## Pipe Up
 
-One sentence description
-
+Mimics pipe functionality in Unix-like systems
 ## Building
 
-Explain briefly how to build your program
-
+To buld program, just run `make` in the root directory of the project.
 ## Running
 
-Show an example run of your program, using at least two additional arguments, and what to expect
 
+An example run of the program is as follows:
+
+```bash
+$ ./pipe ls wc
+       8       8      72
+$ ls | wc
+       8       8      72
 ## Cleaning up
+Notice how the output of the two commands is the same. This is because the program mimics the pipe functionality in Unix-like systems.
 
-Explain briefly how to clean up all binary files
+To clean up the files you can run `make clean` in the root directory of the project.
+```
