@@ -60,3 +60,49 @@ class TestLab1(unittest.TestCase):
         self.assertNotEqual(pipe_result.stderr, '', msg='Error should be reported to standard error.')
         self.assertTrue(self._make_clean, msg='make clean failed')
 
+    def test_bogus_one_arg(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run(('./pipe', 'bogus'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertTrue(pipe_result.returncode, msg = 'Bogus argument should cause an error, expect nonzero return code.')
+        self.assertNotEqual(pipe_result.stderr, '', msg='Error should be reported to standard error.')
+        self.assertTrue(self._make_clean, msg='make clean failed')
+
+    def test_bogus_multiple_arg(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run(('./pipe', 'ls', 'bogus', 'wc'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertTrue(pipe_result.returncode, msg = 'Bogus argument should cause an error, expect nonzero return code.')
+        self.assertNotEqual(pipe_result.stderr, '', msg='Error should be reported to standard error.')
+        self.assertTrue(self._make_clean, msg='make clean failed')
+
+    def test_bogus_multiple_arg_last(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run(('./pipe', 'ls', 'bogus', 'wc'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertTrue(pipe_result.returncode, msg = 'Bogus argument should cause an error, expect nonzero return code.')
+        self.assertNotEqual(pipe_result.stderr, '', msg='Error should be reported to standard error.')
+        self.assertTrue(self._make_clean, msg='make clean failed')
+
+    def test_file_input(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run('./pipe wc < file.txt', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cl_result = subprocess.run(('wc < file.txt'), capture_output=True, shell=True)
+        self.assertEqual(cl_result.stdout, pipe_result.stdout,
+                         msg=f"The output from ./pipe should be {cl_result.stdout} but got {pipe_result.stdout} instead.")
+        self.assertTrue(self._make_clean, msg='make clean failed')
+    
+    def test_file_output(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run(('./pipe ls > file.txt'), capture_output=True, shell=True)
+        cl_result = subprocess.run(('ls > file.txt'), capture_output=True, shell=True)
+        self.assertEqual(cl_result.stdout, pipe_result.stdout,
+                         msg=f"The output from ./pipe should be {cl_result.stdout} but got {pipe_result.stdout} instead.")
+        self.assertTrue(self._make_clean, msg='make clean failed')
+    def test_ls_format(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run(('./pipe ls'), capture_output=True, shell=True)
+        cl_result = subprocess.run(('ls'), capture_output=True, shell=True)
+        self.assertEqual(cl_result.stdout, pipe_result.stdout,
+                         msg=f"The output from ./pipe should be {cl_result.stdout} but got {pipe_result.stdout} instead.")
+
+
+
+
