@@ -103,6 +103,13 @@ class TestLab1(unittest.TestCase):
         self.assertEqual(cl_result.stdout, pipe_result.stdout,
                          msg=f"The output from ./pipe should be {cl_result.stdout} but got {pipe_result.stdout} instead.")
 
+    def test_8_long(self):
+        self.assertTrue(self.make, msg='make failed')
+        pipe_result = subprocess.run(('./pipe hostname uptime whoami uname printenv cal id pwd'), capture_output=True, shell=True)
+        cl_result = subprocess.run(('hostname | uptime | whoami | uname | printenv | cal | id | pwd'), capture_output=True, shell=True)
+        self.assertEqual(cl_result.stdout, pipe_result.stdout,
+                         msg=f"The output from ./pipe should be {cl_result.stdout} but got {pipe_result.stdout} instead.")
+    
 
 
 
