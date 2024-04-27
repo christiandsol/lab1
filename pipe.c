@@ -8,17 +8,14 @@
 
 int main(int argc, char *argv[]) {
     if (argc == 1){
-        fprintf(stderr, "exiting with status %d\n", EINVAL);
         exit(EINVAL);
     }
     int pipefd[argc - 1][2]; // pipe file descriptors
     if (pipe(pipefd[0]) < 0){ //create 1st pipe
-        fprintf(stderr, "pipe error");
         exit(errno);
     }
     int rv = fork(); //1st child
     if (rv < 0) {
-        fprintf(stderr, "fork failed\n");
         exit(errno);
     } else if (rv == 0) {//child
         close(pipefd[0][0]); //close read end
@@ -38,7 +35,6 @@ int main(int argc, char *argv[]) {
         int status;
         wait(&status); //wait for child
         if (WEXITSTATUS(status) != 0) {
-            fprintf(stderr, "child exited with status %d\n", WEXITSTATUS(status));
             exit(WEXITSTATUS(status));
         }
     }
@@ -47,12 +43,10 @@ int main(int argc, char *argv[]) {
     //middle programs
     for (int i = 1; i < argc - 2; i++) {
         if (pipe(pipefd[i]) < 0){ //create ith pipe
-            fprintf(stderr, "pipe error");
             exit(errno);
         }
         rv = fork();
         if (rv < 0) {
-            fprintf(stderr, "fork failed\n");
             exit(errno);
         } else if (rv == 0) { //child
             //data is in read end of pipe i-1
@@ -68,7 +62,6 @@ int main(int argc, char *argv[]) {
             int status;
             wait(&status); //wait for child
             if (WEXITSTATUS(status) != 0) {
-                printf("child exited with signal %d\n", WEXITSTATUS(status));
                 exit(WEXITSTATUS(status));
             }
         }
@@ -77,12 +70,10 @@ int main(int argc, char *argv[]) {
     //parent last program
     if (argc > 2){
         if (pipe(pipefd[argc - 2]) < 0){ //create ith pipe
-            fprintf(stderr, "pipe error");
             exit(errno);
         } 
         rv = fork();
         if (rv < 0) {
-            fprintf(stderr, "fork failed\n");
             exit(errno);
         } else if (rv == 0) { //child
             // redirect previous pipe output to stdin
@@ -97,7 +88,6 @@ int main(int argc, char *argv[]) {
             int status;
             wait(&status); //wait for child
             if (WEXITSTATUS(status) != 0) {
-                printf("child exited with signal %d\n", WEXITSTATUS(status));
                 exit(WEXITSTATUS(status));
             }
         }
